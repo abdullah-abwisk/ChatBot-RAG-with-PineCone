@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const queryEmbedding = embeddingRes.data[0].embedding;
 
     // 2. Query Pinecone for top 3 relevant docs
-    const index = pinecone.index(PINECONE_INDEX);
+    const index = pinecone.index(PINECONE_INDEX!);
     const searchRes = await index.query({
       vector: queryEmbedding,
       topK: 3,
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       "Sorry, I couldn't find an answer.";
 
     return NextResponse.json({ answer });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.errors[0].message },
@@ -80,7 +80,9 @@ export async function POST(req: NextRequest) {
     }
     console.error(error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
       { status: 500 }
     );
   }
